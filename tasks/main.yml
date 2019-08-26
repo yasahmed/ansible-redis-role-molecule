@@ -1,0 +1,42 @@
+# tasks/main.yml
+---
+- name: install redis on RedHat-based distros
+  block:
+    - name: ensure epel repo is installed (RedHat)
+      yum:
+        name: epel-release
+        state: present
+        update_cache: true
+        
+    - name: ensure redis is installed (RedHat)
+      yum:
+        name: redis
+        state: present
+        update_cache: true
+  when: ansible_os_family == 'RedHat'
+
+- name: install redis on Debian-based distros
+  block:
+    # - name: "FIX: Ubuntu 16.04 LTS doesn't come with certain modules, required by ansible"
+    #   raw: apt-get install python-minimal python-apt aptitude -y
+    #   become: true
+    #   become_user: root
+    #   become_method: sudo
+
+    - name: ensure redis is installed (Debian)
+      apt:
+        name: redis-server
+        state: present
+        update_cache: true
+    - name: disable ipv6 binding (Debian)
+      lineinfile:
+        path: /etc/redis/redis.conf
+        regex: '^bind'
+        line: bind 127.0.0.1
+  when: ansible_os_family == 'Debian'
+
+- name: ensure redis service is started and enabled
+  service:
+    name: redis
+    state: started
+    enabled: true
